@@ -7,13 +7,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"net"
+	"net/http"
 	"os"
 	"paynet/pkg/iso8583"
 	"strings"
 	"sync"
 	"time"
+
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -47,6 +51,8 @@ func main() {
 
 	flag.Parse()
 
+	go profile()
+
 	switch strings.ToUpper(mode) {
 	case "CLIENT":
 		runClient(ip, port, numConns, workersPerConn, duration)
@@ -63,6 +69,10 @@ func main() {
 	//fmt.Println("payload only:\t\t", len(iso8583.Encode(msg)))
 	//fullPayload := iso8583.EncodeWithHeader(msg)
 	//fmt.Println("payload with header:\t", len(fullPayload))
+}
+
+func profile() {
+	log.Println(http.ListenAndServe("localhost:6060", nil))
 }
 
 // var msgCache = make(map[int]struct{})
@@ -313,7 +323,7 @@ func handleConn(conn *net.TCPConn) {
 func genMsg(n int) iso8583.Request {
 	msg := iso8583.Request{
 		MessageType:     "0100",
-		PrimaryBitmap:   "B23AE4012AE08034",
+		PrimaryBitmap:   "B23AE4012AE08034", // 1100 0010  0011 1011  1111 0100  0000 0001  0010 1011  1111 0000  1000 0000  0011 0100
 		SecondaryBitmap: "0000000004000020",
 		ProcessingCode:  "072000",
 		TransactionAmt:  "000000001860",
